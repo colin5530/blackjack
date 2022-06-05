@@ -1,6 +1,6 @@
 export const suits = ['spades', 'clubs', 'hearts', 'diamonds'];
 
-export const cardValues = ['A', '2', '3', '4', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+export const cardValues = ['ACE', '2', '3', '4', '4', '5', '6', '7', '8', '9', '10', 'JACK', 'QUEEN', 'KING'];
 
 export const getCardBJValue = (cardNumber) => {
   switch (cardNumber) {
@@ -21,24 +21,12 @@ export const getCardBJValue = (cardNumber) => {
   }
 }
 
-export const getDeck = () => {
-  const deck = [];
-
-  suits.forEach((suit) => {
-    cardValues.forEach((number) => {
-      deck.push({ suit, number, value: getCardBJValue(number), visible: false })
-    })
-  })
-
-  return deck;
+export const fetchDeck = async () => {
+  return await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6')
+  .then((res) => res.json())
 }
 
-export const shuffleDeck = (deck) => {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * i);
-    const temp = deck[i];
-    deck[i] = deck[j];
-    deck[j] = temp;
-  }
-  return deck;
+export const fetchCards = async (deckID, count) => {
+  return await fetch(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=${count}`)
+  .then((res) => res.json());
 }

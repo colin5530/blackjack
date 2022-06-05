@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getCardBJValue } from './helpers/deckUtils';
+import { fetchCards, fetchDeck, getCardBJValue } from './helpers/deckUtils';
 import './App.css';
 
 const cardBackurl = '/playing card back.png';
@@ -9,6 +9,7 @@ const DRAW = 'draw';
 
 function App() {
   const [deckID, setDeckID] = useState();
+  const [deckLoaded, setDeckLoaded] = useState(false)
   const [userHand, setUserHand] = useState([])
   const [dealerHand, setDealerHand] = useState([])
   const [userHandValue, setUserHandValue] = useState(0)
@@ -23,9 +24,9 @@ function App() {
   }, [])
 
   const getDeck = async () => {
-    const deck = await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=6')
-      .then((res) => res.json())
+    const deck = await fetchDeck();
     setDeckID(deck.deck_id);
+    setDeckLoaded(true);
   }
 
   useEffect(() => {
@@ -102,8 +103,7 @@ function App() {
   }
 
   const drawCards = async (count) => {
-    const response = await fetch(`https://deckofcardsapi.com/api/deck/${deckID}/draw/?count=${count}`)
-      .then((res) => res.json());
+    const response = await fetchCards(deckID, count);
     if (!response.success) {
       setErrorMessage(response.error)
       return
@@ -172,56 +172,64 @@ function App() {
       <div>
         Blackjack!
       </div>
-      <div className='dealer-section'>
-        <div className='player-title'>
-          Dealer - {dealerHandValue}
-        </div>
-        <div className='dealer-hand'>
-          {dealerHand.map(card => (
-            <div className='card-container'>
-              <img src={card.visible ? card.image : cardBackurl} className='card' key={card.code} alt={card.value + card.suit} />
-            </div>
-            ))}
-        </div>
-      </div>
-
-      <div className='user-section'>
-        <div className='player-title'>
-          You - {userHandValue}
-        </div>
-        <div className='user-hand'>
-          {userHand.map(card => (
-            <div className='card-container'>
-              <img src={card.visible ? card.image : cardBackurl} className='card' key={card.code} alt={card.value + card.suit} />
-            </div>
-          ))}
-        </div>
-      </div>
-    
-      {errorMessage ? (
-        <div className='error'>
-          {errorMessage}
-        </div>
-      ) : (
+      {deckLoaded ? (
         <>
-          {!gameInProgress ? (
-            <button onClick={deal} className='deal-btn'>Deal</button>
-          ) : (
-            <div className='buttons-container'>
-              <div>
-                <button onClick={drawUserCard} className='hit-me-btn'>Hit Me</button>
-              </div>
-              <div>
-                <button onClick={endTurn} className='end-turn-btn'>End Turn</button>
-              </div>
+          <div className='dealer-section'>
+            <div className='player-title' data-testid='dealer-title'>
+              Dealer - {dealerHandValue}
             </div>
-          )}
-        </>
-      )}
+            <div className='dealer-hand'>
+              {dealerHand.map((card, index) => (
+                <div className='card-container' key={`${card.code}-${index}`} data-testid='dealer-card-container'>
+                  <img src={card.visible ? card.image : cardBackurl} className='card' alt={card.visible ? card.value + card.suit : 'back-of-card'} />
+                </div>
+                ))}
+            </div>
+          </div>
 
-      <div className='winner-statement'>
-        {renderWinnerStatement()}
-      </div>
+          <div className='user-section'>
+            <div className='player-title' data-testid='player-title'>
+              You - {userHandValue}
+            </div>
+            <div className='user-hand'>
+              {userHand.map((card, index) => (
+                <div className='card-container' key={`${card.code}-${index}`} data-testid='player-card-container'>
+                  <img src={card.visible ? card.image : cardBackurl} className='card' alt={card.value + card.suit} />
+                </div>
+              ))}
+            </div>
+          </div>
+        
+          {errorMessage ? (
+            <div className='error' data-testid='error-message'>
+              {errorMessage}
+            </div>
+          ) : (
+            <>
+              {!gameInProgress ? (
+                <button onClick={deal} className='deal-btn' data-testid='deal-btn'>Deal</button>
+              ) : (
+                <div className='buttons-container'>
+                  <div>
+                    <button onClick={drawUserCard} className='hit-me-btn' data-testid='hit-me-btn'>Hit Me</button>
+                  </div>
+                  <div>
+                    <button onClick={endTurn} className='end-turn-btn' data-testid='end-turn-btn'>End Turn</button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className='winner-statement' data-testid='winner-statement'>
+            {renderWinnerStatement()}
+          </div>
+        </>
+      ) : (
+        <div>
+          Shuffling deck...
+        </div>
+      )}
 
     </div>
   );
